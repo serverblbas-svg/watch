@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBS Clock Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Kufi+Arabic:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Orbitron', monospace;
+    overflow: hidden;
+  }
+
+  /* ===== MAIN WIDGET CONTAINER ===== */
+  .widget {
+    width: 420px;
+    position: relative;
+  }
+
+  /* ===== CARD ===== */
+  .clock-card {
+    background: linear-gradient(135deg,
+      rgba(8, 10, 18, 0.92) 0%,
+      rgba(14, 17, 30, 0.95) 50%,
+      rgba(8, 10, 18, 0.92) 100%
+    );
+    border: 1px solid rgba(240, 185, 11, 0.3);
+    border-radius: 20px;
+    padding: 22px 28px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 0 40px rgba(240, 185, 11, 0.08),
+      0 0 80px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+  }
+
+  /* ===== CORNER GLOWS ===== */
+  .clock-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(240,185,11,0.18) 0%, transparent 70%);
+    pointer-events: none;
+    animation: cornerPulse 4s ease-in-out infinite;
+  }
+  .clock-card::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 140px; height: 140px;
+    background: radial-gradient(circle, rgba(240,185,11,0.10) 0%, transparent 70%);
+    pointer-events: none;
+    animation: cornerPulse 4s ease-in-out infinite reverse;
+  }
+  @keyframes cornerPulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+
+  /* ===== TOP BAR ===== */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .zone-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .zone-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #f0b90b;
+    box-shadow: 0 0 12px #f0b90b;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  .zone-name {
+    font-family: 'Noto Kufi Arabic', sans-serif;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 1px;
+    transition: all 0.5s ease;
+  }
+
+  .gmt-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #f0b90b;
+    background: rgba(240,185,11,0.1);
+    border: 1px solid rgba(240,185,11,0.25);
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 2px;
+    transition: all 0.5s ease;
+  }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress-track {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 0 0 20px 20px;
+    overflow: hidden;
+    z-index: 10;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #f0b90b, #fff8);
+    border-radius: 20px;
+    transition: none;
+  }
+
+  /* ===== TIME DISPLAY ===== */
+  .time-section {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .time-main {
+    font-family: 'Orbitron', monospace;
+    font-size: 3.8rem;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 4px;
+    line-height: 1;
+    text-shadow:
+      0 0 30px rgba(240,185,11,0.4),
+      0 0 60px rgba(240,185,11,0.15);
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .time-colon {
+    color: #f0b90b;
+    animation: colonBlink 1s step-end infinite;
+  }
+  @keyframes colonBlink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+  .time-seconds {
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: rgba(240,185,11,0.75);
+    align-self: flex-end;
+    padding-bottom: 6px;
+    letter-spacing: 2px;
+  }
+
+  .ampm-tag {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 2px;
+    align-self: flex-start;
+    padding-top: 6px;
+  }
+
+  /* ===== DATE BAR ===== */
+  .date-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 12px;
+  }
+
+  .date-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .date-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: rgba(240,185,11,0.6);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .date-value {
+    font-family: 'Noto Kufi Arabic', sans-serif;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.8);
+    font-weight: 400;
+    transition: all 0.5s ease;
+  }
+
+  .divider-v {
+    width: 1px;
+    height: 30px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  /* ===== MINI DOTS INDICATOR ===== */
+  .dots-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
+    position: relative;
+    z-index: 2;
+  }
+  .dot-pip {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: all 0.4s ease;
+  }
+  .dot-pip.active {
+    background: #f0b90b;
+    box-shadow: 0 0 8px #f0b90b;
+    width: 16px;
+    border-radius: 3px;
+  }
+
+  /* ===== SLIDE ANIMATION ===== */
+  @keyframes slideInRight {
+    from { transform: translateX(30px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+  @keyframes slideOutLeft {
+    from { transform: translateX(0);   opacity: 1; }
+    to   { transform: translateX(-30px); opacity: 0; }
+  }
+  .slide-in  { animation: slideInRight  0.5s cubic-bezier(.4,0,.2,1) both; }
+  .slide-out { animation: slideOutLeft  0.5s cubic-bezier(.4,0,.2,1) both; }
+
+  /* ===== SCAN LINE ===== */
+  .scanline {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0,0,0,0.03) 3px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    border-radius: 20px;
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+
+<div class="widget">
+  <div class="clock-card" id="card">
+    <div class="scanline"></div>
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="zone-badge">
+        <div class="zone-dot"></div>
+        <span class="zone-name" id="zoneName">هەولێر</span>
+      </div>
+      <div class="gmt-label" id="gmtLabel">GMT+3</div>
+    </div>
+
+    <!-- TIME -->
+    <div class="time-section">
+      <div class="time-main" id="timeParts">
+        <span class="ampm-tag" id="ampm">AM</span>
+        <span id="hh">00</span>
+        <span class="time-colon">:</span>
+        <span id="mm">00</span>
+        <span class="time-colon">:</span>
+        <span class="time-seconds" id="ss">00</span>
+      </div>
+    </div>
+
+    <!-- DATE ROW -->
+    <div class="date-row">
+      <div class="date-item" style="text-align:right;">
+        <span class="date-label">KURDISH</span>
+        <span class="date-value" id="kurdishDate">-</span>
+      </div>
+      <div class="divider-v"></div>
+      <div class="date-item" style="text-align:center;">
+        <span class="date-label">HIJRI</span>
+        <span class="date-value" id="hijriDate">-</span>
+      </div>
+      <div class="divider-v"></div>
+      <div class="date-item" style="text-align:left;">
+        <span class="date-label">GREGORIAN</span>
+        <span class="date-value" id="gregDate">-</span>
+      </div>
+    </div>
+
+    <!-- DOTS -->
+    <div class="dots-indicator" id="dots"></div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ============================
+     TIMEZONE DEFINITIONS
+     (every zone has an offset in hours from UTC)
+  ============================ */
+  const ZONES = [
+    { name: "هەولێر / بەغدا",   nameEn: "Erbil / Baghdad",    offset: 3,  gmtLabel: "GMT+3"  },
+    { name: "لەندەن",            nameEn: "London",              offset: 0,  gmtLabel: "GMT+0"  },
+    { name: "بەرلین / پاریس",   nameEn: "Berlin / Paris",      offset: 2,  gmtLabel: "GMT+2"  },
+    { name: "مۆسکۆ",             nameEn: "Moscow",              offset: 3,  gmtLabel: "GMT+3"  },
+    { name: "دووبەی",            nameEn: "Dubai",               offset: 4,  gmtLabel: "GMT+4"  },
+    { name: "کەراچی / تاشکەند", nameEn: "Karachi / Tashkent",  offset: 5,  gmtLabel: "GMT+5"  },
+    { name: "نیویۆرک",           nameEn: "New York",            offset: -5, gmtLabel: "GMT-5"  },
+    { name: "لۆس ئەنجەلس",      nameEn: "Los Angeles",         offset: -8, gmtLabel: "GMT-8"  },
+  ];
+
+  /* ============================
+     STATE
+  ============================ */
+  const INTERVAL_MS   = 5000;   // 5 seconds per city
+  let   currentIndex  = 0;
+  let   cycleTimer    = null;
+  let   progressAnim  = null;
+  let   progressStart = null;
+
+  /* ============================
+     DOM REFS
+  ============================ */
+  const elZone     = document.getElementById('zoneName');
+  const elGmt      = document.getElementById('gmtLabel');
+  const elHH       = document.getElementById('hh');
+  const elMM       = document.getElementById('mm');
+  const elSS       = document.getElementById('ss');
+  const elAmPm     = document.getElementById('ampm');
+  const elKurdish  = document.getElementById('kurdishDate');
+  const elHijri    = document.getElementById('hijriDate');
+  const elGreg     = document.getElementById('gregDate');
+  const elDots     = document.getElementById('dots');
+  const elProgress = document.getElementById('progressFill');
+  const elTimePart = document.getElementById('timeParts');
+
+  /* ============================
+     BUILD DOTS
+  ============================ */
+  function buildDots() {
+    elDots.innerHTML = '';
+    ZONES.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot-pip' + (i === currentIndex ? ' active' : '');
+      d.id = 'dp_' + i;
+      elDots.appendChild(d);
+    });
+  }
+
+  function updateDots(idx) {
+    document.querySelectorAll('.dot-pip').forEach((d, i) => {
+      d.classList.toggle('active', i === idx);
+    });
+  }
+
+  /* ============================
+     DATE HELPERS
+  ============================ */
+  function getDateForOffset(offsetHours) {
+    const now = new Date();
+    const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+    return new Date(utcMs + offsetHours * 3600000);
+  }
+
+  const kurdishMonths = [
+    "خاکەلێوە","بانەمەڕ","جۆزەردان","پوشپەڕ",
+    "گەلاوێژ","خەرمانان","ڕەزبەر","گەڵاڕێزان",
+    "سەرماوەز","بەفرانبار","ڕێبەندان","ڕەشەمە"
+  ];
+
+  function getKurdishDate(d) {
+    try {
+      const fmt = new Intl.DateTimeFormat('en-US-u-ca-persian', {
+        day: 'numeric', month: 'numeric', year: 'numeric'
+      });
+      const parts = fmt.format(d).split('/');
+      const kYear  = parseInt(parts[2]) + 1321;
+      return `${parseInt(parts[1])}ی ${kurdishMonths[parseInt(parts[0])-1]}ی ${kYear}`;
+    } catch(e) {
+      return d.toLocaleDateString('ku');
+    }
+  }
+
+  function getHijriDate(d) {
+    try {
+      return new Intl.DateTimeFormat('ar-SA', {
+        calendar: 'islamic-umalqura',
+        day: 'numeric', month: 'long', year: 'numeric'
+      }).format(d).replace('هـ','');
+    } catch(e) { return ''; }
+  }
+
+  const gregMonths = [
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec"
+  ];
+  const gregDays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+  function getGregDate(d) {
+    return `${gregDays[d.getDay()]} ${d.getDate()} ${gregMonths[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  /* ============================
+     TICK - EVERY SECOND
+  ============================ */
+  function tick() {
+    const zone = ZONES[currentIndex];
+    const now  = getDateForOffset(zone.offset);
+
+    let h = now.getHours();
+    const m  = now.getMinutes();
+    const s  = now.getSeconds();
+    const ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+
+    elHH.textContent   = String(h).padStart(2,'0');
+    elMM.textContent   = String(m).padStart(2,'0');
+    elSS.textContent   = String(s).padStart(2,'0');
+    elAmPm.textContent = ap;
+
+    elKurdish.textContent = getKurdishDate(now);
+    elHijri.textContent   = getHijriDate(now);
+    elGreg.textContent    = getGregDate(now);
+  }
+
+  /* ============================
+     PROGRESS BAR ANIMATION
+  ============================ */
+  function startProgress() {
+    cancelAnimationFrame(progressAnim);
+    elProgress.style.transition = 'none';
+    elProgress.style.width = '0%';
+    progressStart = performance.now();
+
+    function frame(ts) {
+      const pct = Math.min(100, ((ts - progressStart) / INTERVAL_MS) * 100);
+      elProgress.style.width = pct + '%';
+      if (pct < 100) progressAnim = requestAnimationFrame(frame);
+    }
+    progressAnim = requestAnimationFrame(frame);
+  }
+
+  /* ============================
+     ZONE TRANSITION (slide anim)
+  ============================ */
+  function transitionToZone(idx) {
+    const zone = ZONES[idx];
+
+    // slide out current content
+    elTimePart.classList.add('slide-out');
+
+    setTimeout(() => {
+      elTimePart.classList.remove('slide-out');
+
+      // update labels
+      elZone.textContent = zone.name;
+      elGmt.textContent  = zone.gmtLabel;
+
+      // slide in
+      elTimePart.classList.add('slide-in');
+      setTimeout(() => elTimePart.classList.remove('slide-in'), 500);
+
+      // force immediate tick with new zone
+      currentIndex = idx;
+      tick();
+      updateDots(idx);
+    }, 450);
+
+    startProgress();
+  }
+
+  /* ============================
+     CYCLE
+  ============================ */
+  function nextZone() {
+    const next = (currentIndex + 1) % ZONES.length;
+    transitionToZone(next);
+  }
+
+  function startCycle() {
+    cycleTimer = setInterval(nextZone, INTERVAL_MS);
+  }
+
+  /* ============================
+     INIT
+  ============================ */
+  buildDots();
+  elZone.textContent = ZONES[0].name;
+  elGmt.textContent  = ZONES[0].gmtLabel;
+  tick();
+  startProgress();
+  setInterval(tick, 1000);
+  startCycle();
+</script>
+</body>
+</html>
