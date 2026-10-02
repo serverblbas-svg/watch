@@ -232,7 +232,7 @@
 
     <script>
         // ============================================================
-        // 🕌 داتاکانی کاتی نوێژ (هەولێر ٢٠٢٦)
+        // 🕌 داتاکانی کاتی نوێژ (هەولێر ٢٠٢٦)[cite: 2]
         // ============================================================
         const PRAYER_DATA = {
             "1_1": "06:02|07:21|12:16|14:45|17:06|18:21",
@@ -621,7 +621,7 @@
             const times = data.split('|');
             return times.map(t => {
                 const parts = t.split(':');
-                return { hours: parseInt(parts[0]), minutes: parseInt(parts) };
+                return { hours: parseInt(parts[0]), minutes: parseInt(parts[1]) };
             });
         }
 
@@ -688,16 +688,19 @@
             const now = new Date();
             const utcHours = now.getUTCHours();
             const utcMinutes = now.getUTCMinutes();
+            const localMinutes = now.getMinutes();
             const erbil24 = (utcHours + 3) % 24;
             const totalSeconds = Math.floor(now.getTime() / 1000);
             const cycle = totalSeconds % 20;
 
-            let targetHours24, labelText;
+            let targetHours24, targetMinutes, labelText;
             if (cycle >= 10) {
                 targetHours24 = utcHours;
+                targetMinutes = utcMinutes;
                 labelText = "GMT";
             } else {
                 targetHours24 = erbil24;
+                targetMinutes = localMinutes;
                 labelText = "EBL";
             }
 
@@ -707,7 +710,7 @@
 
             const formattedTime = 
                 String(displayHours12).padStart(2, '0') + ':' +
-                String(utcMinutes).padStart(2, '0') + ' ' + ampm;
+                String(targetMinutes).padStart(2, '0') + ' ' + ampm;
 
             document.getElementById('clockTime').innerText = formattedTime;
             document.getElementById('clockLabel').innerText = labelText;
