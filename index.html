@@ -57,13 +57,13 @@
            ============================================================ */
         .overlay-box {
             position: absolute;
-            text-shadow: 2px 2px 10px rgb(0, 0, 0), 0 0 20px rgb(0, 0, 0);
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.7);
         }
 
         /* 📅 مێژوو */
         .bottom-left {
             bottom: 40px;
-            left: 0px;
+            left: 10px;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -78,12 +78,12 @@
             padding: 8px 20px;
             border-radius: 12px;
             backdrop-filter: blur(4px);
-            border: 1px solid rgba(0, 0, 0, 0);
+            border: 1px solid rgba(255, 255, 255, 0);
         }
 
         .date-display {
             font-family: 'Amiri', 'Noto Naskh Arabic', serif;
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 700;
             color: #fff;
         }
@@ -99,7 +99,7 @@
         /* 🕐 کاتژمێر */
         .bottom-right {
             bottom: 40px;
-            right: 0px;
+            right: 10px;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -120,7 +120,7 @@
 
         .time-display {
             font-family: 'Courier New', monospace;
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 700;
             color: #fff;
             letter-spacing: 2px;
@@ -147,7 +147,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(26, 2, 240, 0);
+            background: rgba(243, 243, 241, 0);
             padding: 4px 16px;
             border-radius: 30px;
             border: 1px solid rgba(255, 217, 0, 0);
@@ -763,7 +763,7 @@
         }, 1000);
 
         fetchWeather();
-        setInterval(fetchWeather, 600000);
+        setInterval(fetchWeather, 300000);
 
         updateClock();
         updateDate();
