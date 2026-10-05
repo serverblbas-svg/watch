@@ -742,9 +742,14 @@
                 dateLabel = "";
             } else {
                 const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const monthNames = [
+                    "کانونی دووەم", "شوبات", "ئادار", "نیسان", 
+                    "ئایار", "حوزەیران", "تەممووز", "ئاب", 
+                    "ئەیلوول", "تشرینی یەکەم", "تشرینی دووەم", "کانونی یەکەم"
+                ];
+                const month = monthNames[now.getMonth()];
                 const day = String(now.getDate()).padStart(2, '0');
-                dateText = `${year}/${month}/${day}`;
+                dateText = `${day} ${month} ${year}`;
                 dateLabel = "م";
             }
 
@@ -763,13 +768,13 @@
                 let icon = '☀️';
                 // پۆلێنکردنی کۆدەکانی باری ئاسمانی (WMO Weather interpretation codes)
                 if (code === 0) {
-                    icon = '☀️'; // ڕۆژی پاک / خۆر
+                    icon = '☀️️'; // ڕۆژی پاک / خۆر
                 } else if (code >= 1 && code <= 3) {
                     icon = '⛅'; // هەورى کەم یان پارچە هەور
                 } else if (code === 45 || code === 48) {
                     icon = '🌫️'; // مژاوی
-                } else if (code >= 51 && code === 67) {
-                    icon = '🌧️'; // باران
+                } else if (code >= 51 && code <= 67) {
+                    icon = '🌧️️'; // باران (لێرەدا هەڵەکە چاککراوە بۆ <= 67)
                 } else if (code >= 71 && code <= 77) {
                     icon = '❄️'; // بەفر
                 } else if (code >= 95) {
